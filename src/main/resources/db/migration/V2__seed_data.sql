@@ -7,5 +7,5 @@ VALUES (1, 1),
        (2, 2);
 
 INSERT INTO "show" (id, performance_id, hall_id, show_time)
-VALUES (1, 1, 1, now() + interval '1' day),
-       (2, 2, 3, now() + interval '2' day);
+VALUES (1, 1, 1, now() + interval '1 day'),
+       (2, 2, 3, now() + interval '2 days');
