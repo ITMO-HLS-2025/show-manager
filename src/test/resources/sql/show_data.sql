@@ -11,7 +11,7 @@ insert into theatre_performance (performance_id, theatre_id)
 values (2, 201);
 
 insert into "show" (id, performance_id, hall_id, show_time)
-values (10, 1, 100, DATEADD('DAY', 1, CURRENT_TIMESTAMP));
+values (10, 1, 100, CURRENT_TIMESTAMP + INTERVAL '1 day');
 
 insert into "show" (id, performance_id, hall_id, show_time)
-values (11, 2, 101, DATEADD('DAY', 1, CURRENT_TIMESTAMP));
+values (11, 2, 101, CURRENT_TIMESTAMP + INTERVAL '1 day');

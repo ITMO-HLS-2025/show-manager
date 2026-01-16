@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:tc:postgresql:16:///show_db
+    driverClassName: org.testcontainers.jdbc.ContainerDatabaseDriver
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      enabled: false
+  config:
+    import: "optional:configserver:"
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
