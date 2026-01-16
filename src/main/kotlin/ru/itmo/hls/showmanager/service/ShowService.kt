@@ -6,6 +6,7 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import ru.itmo.hls.showmanager.client.HallClient
+import ru.itmo.hls.showmanager.client.OrderClient
 import ru.itmo.hls.showmanager.client.SeatClient
 import ru.itmo.hls.showmanager.client.TheatreClient
 import ru.itmo.hls.showmanager.dto.PerformanceCreateDto
@@ -28,7 +29,8 @@ class ShowService(
     private val performanceService: PerformanceService,
     private val hallClient: HallClient,
     private val theatreClient: TheatreClient,
-    private val seatClient: SeatClient
+    private val seatClient: SeatClient,
+    private val orderClient: OrderClient
 ) {
     private val log = LoggerFactory.getLogger(ShowService::class.java)
 
@@ -132,7 +134,19 @@ class ShowService(
     fun getAllSeats(showId: Long): List<SeatRawDto> {
         val show = showRepository.findShowByIdFetch(showId)
             ?: throw ShowNotFoundException("Шоу по id $showId не найдено")
-        return seatClient.getSeats(show.hallId)
+        val occupiedSeatIds = orderClient.getOccupiedSeats(showId).toSet()
+        val seats = seatClient.getSeats(show.hallId)
+        return seats.map { row ->
+            row.copy(
+                seats = row.seats.map { seat ->
+                    if (occupiedSeatIds.contains(seat.seatId)) {
+                        seat.copy(status = "OCCUPIED")
+                    } else {
+                        seat
+                    }
+                }
+            )
+        }
     }
 
     fun findAllByTheatreId(id: Long, now: LocalDateTime, endDate: LocalDateTime): List<Show> {

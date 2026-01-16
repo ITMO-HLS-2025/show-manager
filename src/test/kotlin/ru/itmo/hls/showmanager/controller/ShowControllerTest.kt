@@ -8,7 +8,7 @@ import org.mockito.Mockito.`when`
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.jdbc.Sql
@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import ru.itmo.hls.showmanager.client.HallClient
+import ru.itmo.hls.showmanager.client.OrderClient
 import ru.itmo.hls.showmanager.client.SeatClient
 import ru.itmo.hls.showmanager.client.TheatreClient
 import ru.itmo.hls.showmanager.dto.HallViewDto
@@ -42,14 +43,17 @@ class ShowControllerTest {
     @Autowired
     private lateinit var objectMapper: ObjectMapper
 
-    @MockBean
+    @MockitoBean
     private lateinit var hallClient: HallClient
 
-    @MockBean
+    @MockitoBean
     private lateinit var theatreClient: TheatreClient
 
-    @MockBean
+    @MockitoBean
     private lateinit var seatClient: SeatClient
+
+    @MockitoBean
+    private lateinit var orderClient: OrderClient
 
     @Test
     fun `get show returns payload`() {
@@ -149,6 +153,7 @@ class ShowControllerTest {
                 SeatRawDto(1, listOf(SeatStatusDto(1, 1, "FREE")))
             )
         )
+        `when`(orderClient.getOccupiedSeats(10)).thenReturn(emptyList())
 
         mockMvc.perform(get("/api/shows/10/seats").param("page", "1").param("pageSize", "10"))
             .andExpect(status().isOk)

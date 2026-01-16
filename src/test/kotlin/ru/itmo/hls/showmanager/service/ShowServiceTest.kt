@@ -12,6 +12,8 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.context.jdbc.Sql
 import ru.itmo.hls.showmanager.client.HallClient
+import ru.itmo.hls.showmanager.client.OrderClient
+import ru.itmo.hls.showmanager.client.SeatClient
 import ru.itmo.hls.showmanager.client.TheatreClient
 import ru.itmo.hls.showmanager.dto.HallViewDto
 import ru.itmo.hls.showmanager.dto.PerformanceDto
@@ -35,6 +37,12 @@ class ShowServiceTest {
 
     @MockitoBean
     private lateinit var theatreClient: TheatreClient
+
+    @MockitoBean
+    private lateinit var seatClient: SeatClient
+
+    @MockitoBean
+    private lateinit var orderClient: OrderClient
 
     @Test
     fun `getShowInfo returns aggregated data`() {
