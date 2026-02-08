@@ -23,7 +23,7 @@ class ShowMapperTest {
             hallId = 100,
             showTime = LocalDateTime.of(2030, 1, 1, 19, 0)
         )
-        val hall = HallViewDto(100, 1)
+        val hall = HallViewDto(100, 1, 200)
         val theatre = TheatreViewDto(200, "Main Theatre", "Spb", "Nevsky 1")
 
         val dto = show.toDto(hall, theatre)

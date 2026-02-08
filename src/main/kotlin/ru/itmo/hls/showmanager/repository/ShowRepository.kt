@@ -14,7 +14,6 @@ interface ShowRepository : JpaRepository<Show, Long> {
         """
         select s from Show s
         join fetch s.performance p
-        left join fetch p.theatreIds
         where s.id = :id
         """
     )
@@ -24,7 +23,6 @@ interface ShowRepository : JpaRepository<Show, Long> {
         """
         select distinct s from Show s
         join fetch s.performance p
-        left join fetch p.theatreIds
         where s.showTime between :start and :end
         """
     )
@@ -33,7 +31,7 @@ interface ShowRepository : JpaRepository<Show, Long> {
         end: LocalDateTime
     ): List<Show>
 
-    @EntityGraph(attributePaths = ["performance", "performance.theatreIds"])
+    @EntityGraph(attributePaths = ["performance"])
     fun findAllByShowTimeBetween(
         start: LocalDateTime,
         end: LocalDateTime,
@@ -43,9 +41,8 @@ interface ShowRepository : JpaRepository<Show, Long> {
     @Query(
         """
         select s from Show s
-        join s.performance p
-        join p.theatreIds t
-        where t = :theatreId and s.showTime between :start and :end
+        where s.hallId = :theatreId
+          and s.showTime between :start and :end
         """
     )
     fun findAllByTheatreId(

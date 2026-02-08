@@ -13,12 +13,9 @@ data class ShowDto(
 )
 
 data class ShowCreateDto(
-    val title: String,
-    val description: String,
     val date: LocalDateTime,
-    val durationMinutes: Int?,
-    val hall: HallViewDto,
-    val theatre: TheatreViewDto
+    val performanceId: Long,
+    val hallId: Long
 )
 
 data class ShowViewDto(

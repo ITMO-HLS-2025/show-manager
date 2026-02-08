@@ -29,7 +29,7 @@ class ShowRepositoryTest {
         val now = LocalDateTime.now()
         val end = now.plusDays(14)
 
-        val shows = showRepository.findAllByTheatreId(200, now, end)
+        val shows = showRepository.findAllByTheatreId(100, now, end)
 
         assertEquals(1, shows.size)
         assertEquals(10, shows.first().id)

@@ -41,9 +41,10 @@ class ShowService(
             ?: throw ShowNotFoundException("Шоу по id $id не найдено")
 
         val hall = hallClient.getHall(show.hallId)
-        val theatreId = show.performance.theatreIds.firstOrNull()
-            ?: throw IllegalStateException("Performance ${show.performance.id} has no theatres")
-        val theatre = theatreClient.getTheatre(theatreId)
+        if (hall.theatreId <= 0) {
+            throw IllegalStateException("Hall ${hall.id} has no theatre")
+        }
+        val theatre = theatreClient.getTheatre(hall.theatreId)
 
         return show.toDto(hall, theatre)
     }
@@ -55,18 +56,20 @@ class ShowService(
         val end = now.plusDays(14)
         val shows = showRepository.findAllByShowTimeBetween(now, end)
 
-        val theatreIds = shows.flatMap { it.performance.theatreIds }.distinct()
-        val theatresById = if (theatreIds.isEmpty()) {
-            emptyMap()
-        } else {
+        val hallIds = shows.map { it.hallId }.distinct()
+        val hallsById = hallIds.associateWith { hallClient.getHall(it) }
+        val theatreIds = hallsById.values.mapNotNull { hall ->
+            hall.theatreId.takeIf { it > 0 }
+        }.distinct()
+        val theatresById = if (theatreIds.isEmpty()) emptyMap() else {
             theatreClient.getTheatres(theatreIds).associateBy { it.id }
         }
 
         val filtered = shows.filter { show ->
-            show.performance.theatreIds.any { theatreId ->
-                val theatre = theatresById[theatreId] ?: return@any false
-                theatre.city.equals(city, ignoreCase = true)
-            }
+            val hall = hallsById[show.hallId] ?: return@filter false
+            if (hall.theatreId <= 0) return@filter false
+            val theatre = theatresById[hall.theatreId] ?: return@filter false
+            theatre.city.equals(city, ignoreCase = true)
         }
 
         val fromIndex = ((page - 1) * pageSize).coerceAtLeast(0)
@@ -85,8 +88,7 @@ class ShowService(
             Performance(
                 title = dto.title,
                 description = dto.description,
-                durationMinutes = dto.durationMinutes,
-                theatreIds = dto.theatreIds.toMutableSet()
+                durationMinutes = dto.durationMinutes
             )
         )
         return entity.toDto()
@@ -99,35 +101,33 @@ class ShowService(
         performance.title = dto.title
         performance.description = dto.description
         performance.durationMinutes = dto.durationMinutes
-        performance.theatreIds = dto.theatreIds.toMutableSet()
 
         return performanceService.save(performance).toDto()
     }
 
     fun createShow(dto: ShowCreateDto): ShowDto {
-        val hallId = dto.hall.id
-            ?: throw IllegalArgumentException("Hall id is required")
-        val theatreId = dto.theatre.id
-
-        val performance = performanceService.save(
-            Performance(
-                title = dto.title,
-                description = dto.description,
-                durationMinutes = dto.durationMinutes,
-                theatreIds = mutableSetOf(theatreId)
-            )
-        )
+        if (dto.hallId <= 0) {
+            throw IllegalArgumentException("Hall id is required")
+        }
+        if (dto.performanceId <= 0) {
+            throw IllegalArgumentException("Performance id is required")
+        }
+        val performance = performanceService.findById(dto.performanceId)
+            ?: throw IllegalArgumentException("Performance not found: id=${dto.performanceId}")
 
         val show = showRepository.save(
             Show(
                 performance = performance,
-                hallId = hallId,
+                hallId = dto.hallId,
                 showTime = dto.date
             )
         )
 
-        val hall = hallClient.getHall(hallId)
-        val theatre = theatreClient.getTheatre(theatreId)
+        val hall = hallClient.getHall(dto.hallId)
+        if (hall.theatreId <= 0) {
+            throw IllegalArgumentException("Hall ${hall.id} has no theatre")
+        }
+        val theatre = theatreClient.getTheatre(hall.theatreId)
         return show.toDto(hall, theatre)
     }
 
@@ -150,6 +150,12 @@ class ShowService(
     }
 
     fun findAllByTheatreId(id: Long, now: LocalDateTime, endDate: LocalDateTime): List<Show> {
-        return showRepository.findAllByTheatreId(id, now, endDate)
+        val shows = showRepository.findAllByShowTimeBetween(now, endDate)
+        val hallIds = shows.map { it.hallId }.distinct()
+        val hallsById = hallIds.associateWith { hallClient.getHall(it) }
+        return shows.filter { show ->
+            val hall = hallsById[show.hallId] ?: return@filter false
+            hall.theatreId == id
+        }
     }
 }

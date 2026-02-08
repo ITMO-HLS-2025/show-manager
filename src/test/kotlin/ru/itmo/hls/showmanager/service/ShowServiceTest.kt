@@ -16,6 +16,7 @@ import ru.itmo.hls.showmanager.client.OrderClient
 import ru.itmo.hls.showmanager.client.SeatClient
 import ru.itmo.hls.showmanager.client.TheatreClient
 import ru.itmo.hls.showmanager.dto.HallViewDto
+import ru.itmo.hls.showmanager.dto.PerformanceCreateDto
 import ru.itmo.hls.showmanager.dto.PerformanceDto
 import ru.itmo.hls.showmanager.dto.ShowCreateDto
 import ru.itmo.hls.showmanager.dto.TheatreViewDto
@@ -46,7 +47,7 @@ class ShowServiceTest {
 
     @Test
     fun `getShowInfo returns aggregated data`() {
-        `when`(hallClient.getHall(100)).thenReturn(HallViewDto(100, 1))
+        `when`(hallClient.getHall(100)).thenReturn(HallViewDto(100, 1, 200))
         `when`(theatreClient.getTheatre(200)).thenReturn(
             TheatreViewDto(200, "Main Theatre", "Spb", "Nevsky 1")
         )
@@ -63,6 +64,8 @@ class ShowServiceTest {
 
     @Test
     fun `getAllShow filters by city`() {
+        `when`(hallClient.getHall(100)).thenReturn(HallViewDto(100, 1, 200))
+        `when`(hallClient.getHall(101)).thenReturn(HallViewDto(101, 2, 201))
         `when`(theatreClient.getTheatres(anyList())).thenReturn(
             listOf(
                 TheatreViewDto(200, "Main Theatre", "Spb", "Nevsky 1"),
@@ -77,6 +80,8 @@ class ShowServiceTest {
 
     @Test
     fun `getAllShow returns empty when theatres missing`() {
+        `when`(hallClient.getHall(100)).thenReturn(HallViewDto(100, 1, 200))
+        `when`(hallClient.getHall(101)).thenReturn(HallViewDto(101, 2, 201))
         `when`(theatreClient.getTheatres(anyList())).thenReturn(emptyList())
 
         val page = showService.getAllShow("Spb", 1, 10)
@@ -87,6 +92,8 @@ class ShowServiceTest {
 
     @Test
     fun `getAllShow returns empty page when out of range`() {
+        `when`(hallClient.getHall(100)).thenReturn(HallViewDto(100, 1, 200))
+        `when`(hallClient.getHall(101)).thenReturn(HallViewDto(101, 2, 201))
         `when`(theatreClient.getTheatres(anyList())).thenReturn(
             listOf(TheatreViewDto(200, "Main Theatre", "Spb", "Nevsky 1"))
         )
@@ -100,6 +107,8 @@ class ShowServiceTest {
     @Test
     @Sql(scripts = ["/sql/cleanup.sql", "/sql/show_data.sql", "/sql/show_data_multi_theatre.sql"])
     fun `getAllShow matches when any theatre fits`() {
+        `when`(hallClient.getHall(100)).thenReturn(HallViewDto(100, 1, 200))
+        `when`(hallClient.getHall(101)).thenReturn(HallViewDto(101, 2, 201))
         `when`(theatreClient.getTheatres(anyList())).thenReturn(
             listOf(
                 TheatreViewDto(200, "Main Theatre", "Moscow", "Tverskaya 1"),
@@ -114,19 +123,24 @@ class ShowServiceTest {
 
     @Test
     @Sql(scripts = ["/sql/cleanup.sql"])
-    fun `createShow persists performance and show`() {
-        `when`(hallClient.getHall(300)).thenReturn(HallViewDto(300, 5))
+    fun `createShow persists show with existing performance`() {
+        `when`(hallClient.getHall(300)).thenReturn(HallViewDto(300, 5, 400))
         `when`(theatreClient.getTheatre(400)).thenReturn(
             TheatreViewDto(400, "City Theatre", "Kazan", "Bauman 3")
         )
 
+        val performance = showService.createPerformance(
+            PerformanceCreateDto(
+                title = "New Performance",
+                description = "Fresh play",
+                durationMinutes = 90
+            )
+        )
+
         val dto = ShowCreateDto(
-            title = "New Show",
-            description = "Fresh play",
             date = LocalDateTime.now(),
-            durationMinutes = 90,
-            hall = HallViewDto(300, 5),
-            theatre = TheatreViewDto(400, "City Theatre", "Kazan", "Bauman 3")
+            performanceId = performance.id,
+            hallId = 300
         )
 
         val created = showService.createShow(dto)
@@ -137,8 +151,8 @@ class ShowServiceTest {
 
     @Test
     @Sql(scripts = ["/sql/cleanup.sql", "/sql/show_data_no_theatre.sql"])
-    fun `getShowInfo throws when no theatre ids`() {
-        `when`(hallClient.getHall(102)).thenReturn(HallViewDto(102, 1))
+    fun `getShowInfo throws when hall has no theatre`() {
+        `when`(hallClient.getHall(102)).thenReturn(HallViewDto(102, 1, 0))
 
         assertThrows(IllegalStateException::class.java) {
             showService.getShowInfo(12)
@@ -146,19 +160,17 @@ class ShowServiceTest {
     }
 
     @Test
-    fun `updatePerformance updates theatre ids`() {
+    fun `updatePerformance updates fields`() {
         val dto = PerformanceDto(
             id = 1,
             title = "Hamlet Updated",
             description = "Updated",
-            durationMinutes = 110,
-            theatreIds = listOf(200, 201)
+            durationMinutes = 110
         )
 
         val updated = showService.updatePerformance(1, dto)
 
         assertEquals("Hamlet Updated", updated.title)
-        assertEquals(2, updated.theatreIds.size)
     }
 
     @Test
@@ -167,8 +179,7 @@ class ShowServiceTest {
             id = 999,
             title = "Missing",
             description = null,
-            durationMinutes = null,
-            theatreIds = emptyList()
+            durationMinutes = null
         )
 
         assertThrows(RuntimeException::class.java) {

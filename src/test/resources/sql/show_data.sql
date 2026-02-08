@@ -4,12 +4,6 @@ values (1, 'Hamlet', 'Classic drama', 120);
 insert into performance (id, title, description, duration_minutes)
 values (2, 'Swan Lake', 'Ballet', 140);
 
-insert into theatre_performance (performance_id, theatre_id)
-values (1, 200);
-
-insert into theatre_performance (performance_id, theatre_id)
-values (2, 201);
-
 insert into "show" (id, performance_id, hall_id, show_time)
 values (10, 1, 100, CURRENT_TIMESTAMP + INTERVAL '1 day');
 

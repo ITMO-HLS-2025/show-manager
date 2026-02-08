@@ -26,7 +26,9 @@ class ShowController(
     private val paginationValidator: PaginationValidator
 ) {
     @GetMapping("/{id}")
-    fun getShow(@PathVariable id: Long): ShowDto = showService.getShowInfo(id)
+    fun getShow(
+        @PathVariable id: Long
+    ): ShowDto = showService.getShowInfo(id)
 
     @GetMapping
     fun getAllShows(
@@ -44,7 +46,9 @@ class ShowController(
     }
 
     @PostMapping
-    fun createShow(@RequestBody dto: ShowCreateDto): ShowDto = showService.createShow(dto)
+    fun createShow(
+        @RequestBody dto: ShowCreateDto
+    ): ShowDto = showService.createShow(dto)
 
     @GetMapping("/{id}/seats")
     fun getAllSeatsPaged(
@@ -65,13 +69,16 @@ class ShowController(
     ): List<ShowViewDto> =
         showService.findAllByTheatreId(theatreId, from, to).map { it.toViewDto() }
 
-    @PostMapping("/performance")
-    fun createPerformance(@RequestBody dto: PerformanceCreateDto): PerformanceDto =
+    @PostMapping("/perfomance")
+    fun createPerformance(
+        @RequestBody dto: PerformanceCreateDto
+    ): PerformanceDto =
         showService.createPerformance(dto)
 
-    @PutMapping("/performance/{id}")
+    @PutMapping("/perfomance")
     fun updatePerformance(
-        @PathVariable id: Long,
         @RequestBody dto: PerformanceDto
-    ): PerformanceDto = showService.updatePerformance(id, dto)
+    ): PerformanceDto {
+        return showService.updatePerformance(dto.id, dto)
+    }
 }

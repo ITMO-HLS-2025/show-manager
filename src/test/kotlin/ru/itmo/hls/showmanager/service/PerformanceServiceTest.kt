@@ -31,8 +31,7 @@ class PerformanceServiceTest {
             Performance(
                 title = "New Performance",
                 description = "Desc",
-                durationMinutes = 80,
-                theatreIds = mutableSetOf(300)
+                durationMinutes = 80
             )
         )
 

@@ -5,5 +5,5 @@ import ru.itmo.hls.showmanager.dto.HallViewDto
 
 @Component
 class HallClientFallback : HallClient {
-    override fun getHall(id: Long): HallViewDto = HallViewDto(id = id, number = -1)
+    override fun getHall(id: Long): HallViewDto = HallViewDto(id = id, number = -1, theatreId = -1)
 }

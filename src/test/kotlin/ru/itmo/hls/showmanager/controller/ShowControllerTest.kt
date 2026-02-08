@@ -24,6 +24,7 @@ import ru.itmo.hls.showmanager.client.OrderClient
 import ru.itmo.hls.showmanager.client.SeatClient
 import ru.itmo.hls.showmanager.client.TheatreClient
 import ru.itmo.hls.showmanager.dto.HallViewDto
+import ru.itmo.hls.showmanager.service.ShowService
 import ru.itmo.hls.showmanager.dto.ShowCreateDto
 import ru.itmo.hls.showmanager.dto.TheatreViewDto
 import ru.itmo.hls.showmanager.dto.PerformanceCreateDto
@@ -43,6 +44,9 @@ class ShowControllerTest {
     @Autowired
     private lateinit var objectMapper: ObjectMapper
 
+    @Autowired
+    private lateinit var showService: ShowService
+
     @MockitoBean
     private lateinit var hallClient: HallClient
 
@@ -57,7 +61,7 @@ class ShowControllerTest {
 
     @Test
     fun `get show returns payload`() {
-        `when`(hallClient.getHall(100)).thenReturn(HallViewDto(100, 1))
+        `when`(hallClient.getHall(100)).thenReturn(HallViewDto(100, 1, 200))
         `when`(theatreClient.getTheatre(200)).thenReturn(
             TheatreViewDto(200, "Main Theatre", "Spb", "Nevsky 1")
         )
@@ -73,6 +77,8 @@ class ShowControllerTest {
 
     @Test
     fun `get shows filters by city`() {
+        `when`(hallClient.getHall(100)).thenReturn(HallViewDto(100, 1, 200))
+        `when`(hallClient.getHall(101)).thenReturn(HallViewDto(101, 2, 201))
         `when`(theatreClient.getTheatres(anyList())).thenReturn(
             listOf(
                 TheatreViewDto(200, "Main Theatre", "Spb", "Nevsky 1"),
@@ -92,18 +98,23 @@ class ShowControllerTest {
     @Test
     @Sql(scripts = ["/sql/cleanup.sql"])
     fun `create show persists and returns`() {
-        `when`(hallClient.getHall(300)).thenReturn(HallViewDto(300, 5))
+        `when`(hallClient.getHall(300)).thenReturn(HallViewDto(300, 5, 400))
         `when`(theatreClient.getTheatre(400)).thenReturn(
             TheatreViewDto(400, "City Theatre", "Kazan", "Bauman 3")
         )
 
+        val performance = showService.createPerformance(
+            PerformanceCreateDto(
+                title = "New Performance",
+                description = "Fresh play",
+                durationMinutes = 90
+            )
+        )
+
         val dto = ShowCreateDto(
-            title = "New Show",
-            description = "Fresh play",
             date = LocalDateTime.now(),
-            durationMinutes = 90,
-            hall = HallViewDto(300, 5),
-            theatre = TheatreViewDto(400, "City Theatre", "Kazan", "Bauman 3")
+            performanceId = performance.id,
+            hallId = 300
         )
 
         mockMvc.perform(
@@ -112,7 +123,7 @@ class ShowControllerTest {
                 .content(objectMapper.writeValueAsString(dto))
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.title").value("New Show"))
+            .andExpect(jsonPath("$.title").value("New Performance"))
             .andExpect(jsonPath("$.hall.id").value(300))
             .andExpect(jsonPath("$.theatre.id").value(400))
     }
@@ -129,12 +140,9 @@ class ShowControllerTest {
     @Sql(scripts = ["/sql/cleanup.sql"])
     fun `create show returns 400 when hall id missing`() {
         val dto = ShowCreateDto(
-            title = "New Show",
-            description = "Fresh play",
             date = LocalDateTime.now(),
-            durationMinutes = 90,
-            hall = HallViewDto(null, 5),
-            theatre = TheatreViewDto(400, "City Theatre", "Kazan", "Bauman 3")
+            performanceId = 400,
+            hallId = 0
         )
 
         mockMvc.perform(
@@ -181,8 +189,7 @@ class ShowControllerTest {
         val dto = PerformanceCreateDto(
             title = "New Performance",
             description = "Desc",
-            durationMinutes = 80,
-            theatreIds = listOf(300)
+            durationMinutes = 80
         )
 
         mockMvc.perform(
@@ -192,7 +199,6 @@ class ShowControllerTest {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.title").value("New Performance"))
-            .andExpect(jsonPath("$.theatreIds[0]").value(300))
     }
 
     @Test
@@ -201,8 +207,7 @@ class ShowControllerTest {
             id = 1,
             title = "Hamlet Updated",
             description = "Updated",
-            durationMinutes = 110,
-            theatreIds = listOf(200, 201)
+            durationMinutes = 110
         )
 
         mockMvc.perform(
@@ -212,6 +217,5 @@ class ShowControllerTest {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.title").value("Hamlet Updated"))
-            .andExpect(jsonPath("$.theatreIds", hasSize<Any>(2)))
     }
 }

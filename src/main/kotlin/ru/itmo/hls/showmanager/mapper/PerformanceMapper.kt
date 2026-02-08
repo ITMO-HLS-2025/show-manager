@@ -8,6 +8,5 @@ fun Performance.toDto(): PerformanceDto =
         id = id,
         title = title,
         description = description,
-        durationMinutes = durationMinutes,
-        theatreIds = theatreIds.toList()
+        durationMinutes = durationMinutes
     )

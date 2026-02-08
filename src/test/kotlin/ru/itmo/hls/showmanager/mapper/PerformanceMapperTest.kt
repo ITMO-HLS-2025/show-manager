@@ -11,8 +11,7 @@ class PerformanceMapperTest {
             id = 1,
             title = "Hamlet",
             description = "Desc",
-            durationMinutes = 120,
-            theatreIds = mutableSetOf(200, 201)
+            durationMinutes = 120
         )
 
         val dto = performance.toDto()
@@ -21,6 +20,5 @@ class PerformanceMapperTest {
         assertEquals("Hamlet", dto.title)
         assertEquals("Desc", dto.description)
         assertEquals(120, dto.durationMinutes)
-        assertEquals(2, dto.theatreIds.size)
     }
 }
