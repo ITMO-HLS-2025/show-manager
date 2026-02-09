@@ -1,0 +1,14 @@
+package ru.itmo.hls.showmanager.application.dto
+
+data class PerformanceDto(
+    val id: Long,
+    val title: String,
+    val description: String?,
+    val durationMinutes: Int?
+)
+
+data class PerformanceCreateDto(
+    val title: String,
+    val description: String?,
+    val durationMinutes: Int?
+)
