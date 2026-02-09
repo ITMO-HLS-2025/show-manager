@@ -193,7 +193,7 @@ class ShowControllerTest {
         )
 
         mockMvc.perform(
-            post("/api/shows/performance")
+            post("/api/shows/perfomance")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto))
         )
@@ -211,7 +211,7 @@ class ShowControllerTest {
         )
 
         mockMvc.perform(
-            put("/api/shows/performance/1")
+            put("/api/shows/perfomance")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto))
         )
